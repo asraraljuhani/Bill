@@ -1,49 +1,32 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Created By: Asrar
+ * some of codes from https://github.com/buckyroberts 
+ * 
  */
 package bill;
-//package com.concretepage;
 
-import com.itextpdf.text.Document;
 
 import com.itextpdf.text.Image;
 import com.itextpdf.text.*;
 
-import java.io.FileNotFoundException;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import java.util.*;
 import javafx.collections.*;
-import javafx.event.EventType;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
-import javafx.stage.*;
 import javafx.geometry.*;
-import javafx.print.PageLayout;
-import javafx.print.PageOrientation;
-import javafx.print.Paper;
-import javafx.print.Printer;
-import javafx.print.PrinterJob;
-import javafx.scene.*;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
-import javafx.scene.transform.Scale;
-import java.util.*;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import com.itextpdf.text.BaseColor;
@@ -53,15 +36,15 @@ import com.itextpdf.text.Element;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import com.itextpdf.text.Font;
-import com.sun.scenario.effect.ImageData;
-import java.awt.Graphics;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
+import java.awt.FlowLayout;
 import java.io.IOException;
-import static javafx.print.Paper.A4;
+import javax.swing.JFrame;
+import static javax.swing.JFrame.EXIT_ON_CLOSE;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 /**
  *
@@ -70,12 +53,10 @@ import static javafx.print.Paper.A4;
 public class Bill extends Application {
 
     Stage window;
-    TableView<thing> table;
-    String NameOfCompany;
-    ArrayList<thing> list = new ArrayList<>();
-    private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 36,
-            Font.BOLD);
-    //Document d=new Document();
+    TableView<Thing> table;
+    String nameOfCompany;
+    ArrayList<Thing> list = new ArrayList<>();
+    private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 36,Font.BOLD);
 
     TextField nameInput, priceInput, quantityInput;
 
@@ -94,22 +75,22 @@ public class Bill extends Application {
         window.setTitle("The Bill ");
 
         //Name column
-        TableColumn<thing, String> nameColumn = new TableColumn<>("Name");
+        TableColumn<Thing, String> nameColumn = new TableColumn<>("Name");
         nameColumn.setMinWidth(200);
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
         //Price column
-        TableColumn<thing, Double> priceColumn = new TableColumn<>("Price");
+        TableColumn<Thing, Double> priceColumn = new TableColumn<>("Price");
         priceColumn.setMinWidth(100);
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
 
         //Quantity column
-        TableColumn<thing, Integer> quantityColumn = new TableColumn<>("Quantity");
+        TableColumn<Thing, Integer> quantityColumn = new TableColumn<>("Quantity");
         quantityColumn.setMinWidth(100);
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
 
         //Total column
-        TableColumn<thing, Double> totalColumn = new TableColumn<>("Total");
+        TableColumn<Thing, Double> totalColumn = new TableColumn<>("Total");
         totalColumn.setMinWidth(100);
         totalColumn.setCellValueFactory(new PropertyValueFactory<>("total"));
 
@@ -120,7 +101,6 @@ public class Bill extends Application {
 
         VBox vBox3 = new VBox();
 
-        /////////////////////////////////////////////////
         //Name input
         nameInput = new TextField();
         nameInput.setPromptText("Name");
@@ -153,19 +133,22 @@ public class Bill extends Application {
         CompanyNameInput.setPromptText("Company Name");
         CompanyNameInput.setMinWidth(200);
 
-        System.out.println(CompanyNameInput.getText());
         HBox hBox1 = new HBox();
         hBox1.setPadding(new Insets(10, 10, 10, 10));
         hBox1.setSpacing(10);
         Button next1 = new Button("Next");
         Button close = new Button("Close");
         Button p1 = new Button("Previous");
+        Button readFile = new Button("read from File");
         next1.setAlignment(Pos.CENTER);
         close.setAlignment(Pos.CENTER);
         p1.setAlignment(Pos.CENTER);
+        readFile.setAlignment(Pos.CENTER);
         hBox1.setAlignment(Pos.CENTER);
-        hBox1.getChildren().addAll(CompanyName, CompanyNameInput, next1);
-
+        hBox1.getChildren().addAll(CompanyName, CompanyNameInput, next1, readFile);
+        readFile.setOnAction(e -> {
+            readFile();
+        });
         vBox1.setAlignment(Pos.CENTER);
 
         vBox1.getChildren().addAll(hBox1, close);
@@ -223,7 +206,7 @@ public class Bill extends Application {
         //next Button
         next1.setOnAction(e -> {
             window.setScene(scene2);
-            this.NameOfCompany = CompanyNameInput.getText().toUpperCase();
+            this.nameOfCompany = CompanyNameInput.getText().toUpperCase();
         });
 
         next2.setOnAction(e -> window.setScene(scene3));
@@ -234,28 +217,32 @@ public class Bill extends Application {
         create.setOnAction(e -> {
             try {
 
-                pdf(table, this.NameOfCompany);
+                pdf(table, this.nameOfCompany);
                 Alert alert = new Alert(AlertType.CONFIRMATION);
 
                 alert.setTitle("Success");
                 alert.setHeaderText("Your Bill have successfully create it:) ");
-                alert.setContentText("if you want to close the program click on OK..if you won`t click on CANCEL");
+                alert.setContentText("If you want to read the file press Read The File\nIf you want to close the program click on OK\nIf you won`t click on CANCEL");
+                ButtonType readTheFile = new ButtonType("Read The File");
+                alert.getButtonTypes().add(readTheFile);
 
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.get() == ButtonType.OK) {
                     // ... user chose OK
                     alert.close();
                     window.close();
-                } else {
+                } else if (result.get() == ButtonType.CANCEL) {
                     // ... user chose CANCEL or closed the dialog
                     alert.close();
-
+                } else {
+                    // ... user chose readTheFile button
+                    readFile();
                 }
 
             } catch (FileNotFoundException | DocumentException ex) {
-                Logger.getLogger(Bill.class.getName()).log(Level.SEVERE, null, ex);
+                ex.printStackTrace();
             } catch (IOException ex) {
-                Logger.getLogger(Bill.class.getName()).log(Level.SEVERE, null, ex);
+                ex.printStackTrace();
             }
         });
 
@@ -271,62 +258,48 @@ public class Bill extends Application {
      *
      */
     public void addButtonClicked() {
-        // Boolean i=false;
-        thing product = new thing();
-        product.setName(nameInput.getText());
+        do {
+            try {
+                Thing product = new Thing();
 
-        product.setPrice(Double.parseDouble(priceInput.getText()));
+                product.setName(nameInput.getText());
+                product.setPrice(Double.parseDouble(priceInput.getText()));
+                product.setQuantity(Integer.parseInt(quantityInput.getText()));
 
-        product.setQuantity(Integer.parseInt(quantityInput.getText()));
-//
-//        while (i == false) {
-//
-//            try {
-//
-//                product.setPrice(Double.parseDouble(priceInput.getText()));
-//                product.setQuantity(Integer.parseInt(quantityInput.getText()));
-//
-//                i = true;
-//            } catch (Exception e) {
-//
-//                // check();
-//                Alert alert = new Alert(AlertType.ERROR);
-//                alert.setTitle("Alert!");
-//                alert.setHeaderText("You Entered Wrong value");
-//                alert.setContentText("please check the value that you entered is numbers not letters.");
-//                alert.close();
-//
-//                priceInput.clear();
-//                quantityInput.clear();
-//                priceInput.clear();
-//                quantityInput.clear();
-//            }
-//        }
+                table.getItems().add(product);
+                nameInput.clear();
+                priceInput.clear();
+                quantityInput.clear();
+                break;
+            } catch (Exception e) {
+                nameInput.clear();
+                priceInput.clear();
+                quantityInput.clear();
 
-         
-        
-        table.getItems().add(product);
-        nameInput.clear();
-        priceInput.clear();
-        quantityInput.clear();
+                Alert alert = new Alert(AlertType.ERROR, "You enter wrong value in the table, please be careful", ButtonType.CLOSE);
+                alert.showAndWait();
+                return;
+
+            }
+        } while (true);
 
     }
 
     //Delete button clicked
     public void deleteButtonClicked() {
-        ObservableList<thing> productSelected, allProducts;
+        ObservableList<Thing> productSelected, allProducts;
         allProducts = table.getItems();
         productSelected = table.getSelectionModel().getSelectedItems();
-        productSelected.forEach(allProducts::remove);
+        productSelected.forEach(allProducts::remove);//member refrence expression
     }
 
     //Get all of the products
     /**
      *
-     * @return
+     * @return products
      */
-    public ObservableList<thing> getProduct() {
-        ObservableList<thing> products = FXCollections.observableArrayList();
+    public ObservableList<Thing> getProduct() {
+        ObservableList<Thing> products = FXCollections.observableArrayList();
 
         return products;
     }
@@ -348,15 +321,7 @@ public class Bill extends Application {
         }
     }
 
-    private void check() {
-
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle("Alert!");
-        alert.setHeaderText("You Entered Wrong value");
-        alert.setContentText("please check the value that you entered is numbers not letters.");
-    }
-
-    public void pdf(TableView<thing> table1, String name) throws FileNotFoundException, DocumentException, BadElementException, IOException {
+    public void pdf(TableView<Thing> table1, String name) throws FileNotFoundException, DocumentException, BadElementException, IOException {
         Document document = new Document(PageSize.A4);
         Rectangle one = new Rectangle(100, 100);
         document.addTitle(name);
@@ -393,15 +358,13 @@ public class Bill extends Application {
         document.open();
 
         Paragraph paragraph = new Paragraph();
-        //addEmptyLine(paragraph, 100);
-        // document.add(Chunk.NEWLINE);
-
+     
         document.add(Chunk.TABBING);
         img.setAlignment(Element.ALIGN_CENTER);
-        // img.setAbsolutePosition(10, (float) (PageSize.A4.getHeight() - 20.0));
+        
         document.add(img);
         document.add(new Paragraph(""));
-        // document.add(Chunk.TABBING);
+
         document.add(Chunk.NEWLINE);
         document.add(Chunk.NEWLINE);
         document.add(Chunk.NEWLINE);
@@ -410,22 +373,85 @@ public class Bill extends Application {
         document.add(p1);
         document.add(new Paragraph("\n"));
 
-        // document.add(Chunk.TABBING);
         document.add(table);
         document.close();
-    }
-
-    public ArrayList conv(TableView<thing> table1, ArrayList<thing> list) {
-        for (int i = 0; i < 5; i++) {
-        }
-
-        return list;
     }
 
     private static void addEmptyLine(Paragraph paragraph, int number) {
         for (int i = 0; i < number; i++) {
             paragraph.add(new Paragraph(" "));
         }
+    }
+
+    public void readFile() {
+        PdfReader reader = null;
+
+        try {
+
+            reader = new PdfReader("Bill.pdf");
+            int pages = reader.getNumberOfPages();
+
+            //Iterate the pdf through pages.
+            for (int i = 1; i <= pages; i++) {
+                // pageNumber = 1 start from one. 
+                String textFromPage = PdfTextExtractor.getTextFromPage(reader, i);
+                textFromPage = textFromPage.substring(8);
+                String companyName = textFromPage.substring(0, textFromPage.indexOf("\n"));
+                String[] msg = printMsg(textFromPage);
+
+                readWin(msg, companyName);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            reader.close();
+        }
+    }
+
+    public String[] printMsg(String text) {
+        text = text.substring(text.indexOf("\n"));
+        text = text.substring(text.indexOf("N"));
+        text = text.substring(text.lastIndexOf("Total") + 6);
+        String ar[] = text.split("\\s");
+
+        return ar;
+
+    }
+
+    public void readWin(String[] msg, String companyName) {
+
+        JFrame frame = new JFrame();
+
+        JTextArea textArea = new JTextArea();
+
+        JScrollPane scroll = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scroll.setSize(500, 500);
+
+        // Add the scroll pane into the content pane
+        frame.add(scroll);
+
+        frame.setSize(600, 600);
+        textArea.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 1));
+        String dots = " ";
+        for (int i = 0; i <= companyName.length() + 2; i++) {
+            dots += "-";
+        }
+        textArea.setText(dots + "\n " + companyName + "\n" + dots + "\n");
+
+        textArea.setText(textArea.getText() + " ---------------------------The Products-----------------------\n"
+                + " -------------------------------------------------------------\n");
+        for (int i = 0; i < msg.length - 3; i += 4) {
+
+            textArea.setText(textArea.getText() + " Product Name: " + msg[i] + "\n Price: " + msg[i + 1] + "\n Quantity: " + msg[i + 2] + "\n Total: " + msg[i + 3] + "\n--------------------------------------------------------------\n");
+
+        }
+        frame.setTitle("The Bill");
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+
     }
 
 }
