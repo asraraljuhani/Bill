@@ -5,10 +5,7 @@
  */
 package bill;
 
-
-import com.itextpdf.text.Image;
-import com.itextpdf.text.*;
-
+import com.itextpdf.text.BadElementException;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -30,6 +27,7 @@ import javafx.scene.control.ButtonType;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
@@ -37,10 +35,17 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import java.awt.FlowLayout;
+import java.io.FileInputStream;
 import java.io.IOException;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
 import javax.swing.JScrollPane;
@@ -56,7 +61,7 @@ public class Bill extends Application {
     TableView<Thing> table;
     String nameOfCompany;
     ArrayList<Thing> list = new ArrayList<>();
-    private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 36,Font.BOLD);
+    private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 36, Font.BOLD);
 
     TextField nameInput, priceInput, quantityInput;
 
@@ -73,6 +78,10 @@ public class Bill extends Application {
     public void start(Stage primaryStage) throws Exception, FileNotFoundException, DocumentException {
         window = primaryStage;
         window.setTitle("The Bill ");
+        //add icon to the window
+        Image imageWindow;
+        imageWindow = new Image(new FileInputStream("client-icon.png"));
+        window.getIcons().add(imageWindow);
 
         //Name column
         TableColumn<Thing, String> nameColumn = new TableColumn<>("Name");
@@ -139,7 +148,15 @@ public class Bill extends Application {
         Button next1 = new Button("Next");
         Button close = new Button("Close");
         Button p1 = new Button("Previous");
-        Button readFile = new Button("read from File");
+
+        Image image;
+        image = new Image(new FileInputStream("review-icon.png"));
+
+        //Setting the image view 
+        ImageView imageView = new ImageView(image);
+
+        Button readFile = new Button("read from File", imageView);
+
         next1.setAlignment(Pos.CENTER);
         close.setAlignment(Pos.CENTER);
         p1.setAlignment(Pos.CENTER);
@@ -186,8 +203,13 @@ public class Bill extends Application {
         HBox hBox3 = new HBox();
         hBox3.setPadding(new Insets(10, 10, 10, 10));
         hBox3.setSpacing(10);
+        //cat-paper-icon
+        Image imageCreate;
+        imageCreate = new Image(new FileInputStream("cat-paper-icon.png"));
+        //Setting the image view 
+        ImageView viewimageCreate = new ImageView(imageCreate);
 
-        Button create = new Button("create");
+        Button create = new Button("create", viewimageCreate);
 
         HBox hBox4 = new HBox();
         hBox4.setPadding(new Insets(10, 10, 10, 10));
@@ -224,8 +246,9 @@ public class Bill extends Application {
                 alert.setHeaderText("Your Bill have successfully create it:) ");
                 alert.setContentText("If you want to read the file press Read The File\nIf you want to close the program click on OK\nIf you won`t click on CANCEL");
                 ButtonType readTheFile = new ButtonType("Read The File");
-                alert.getButtonTypes().add(readTheFile);
 
+                alert.getButtonTypes().add(readTheFile);
+                alert.setGraphic(imageView);
                 Optional<ButtonType> result = alert.showAndWait();
                 if (result.get() == ButtonType.OK) {
                     // ... user chose OK
@@ -261,6 +284,12 @@ public class Bill extends Application {
         do {
             try {
                 Thing product = new Thing();
+                if (nameInput.getText().length() == 0) {
+                    Alert alert = new Alert(AlertType.ERROR, "You did not enter a name for the product, please be careful", ButtonType.CLOSE);
+                    alert.showAndWait();
+                    return;
+
+                }
 
                 product.setName(nameInput.getText());
                 product.setPrice(Double.parseDouble(priceInput.getText()));
@@ -350,7 +379,7 @@ public class Bill extends Application {
         p1.setFont(catFont);
         PdfWriter.getInstance(document, new FileOutputStream("Bill.pdf"));
 
-        Image img = Image.getInstance("invoice.png");
+        com.itextpdf.text.Image img = com.itextpdf.text.Image.getInstance("invoice.png");
         img.scaleAbsolute(100f, 100f);
 
         img.setAbsolutePosition((float) (PageSize.A4.getWidth() - 350.0), (float) (PageSize.A4.getHeight() - 120.0));
@@ -358,10 +387,10 @@ public class Bill extends Application {
         document.open();
 
         Paragraph paragraph = new Paragraph();
-     
+
         document.add(Chunk.TABBING);
         img.setAlignment(Element.ALIGN_CENTER);
-        
+
         document.add(img);
         document.add(new Paragraph(""));
 
@@ -396,7 +425,12 @@ public class Bill extends Application {
                 // pageNumber = 1 start from one. 
                 String textFromPage = PdfTextExtractor.getTextFromPage(reader, i);
                 textFromPage = textFromPage.substring(8);
-                String companyName = textFromPage.substring(0, textFromPage.indexOf("\n"));
+                String companyName = "";
+                if (textFromPage.indexOf("\n") == -1) {
+                    companyName = "There no Company Name";
+                } else {
+                    companyName = textFromPage.substring(0, textFromPage.indexOf("\n"));
+                }
                 String[] msg = printMsg(textFromPage);
 
                 readWin(msg, companyName);
@@ -412,7 +446,12 @@ public class Bill extends Application {
     }
 
     public String[] printMsg(String text) {
+
         text = text.substring(text.indexOf("\n"));
+
+        if (text.indexOf("N") == -1) {
+            return new String[]{"There no products to show."};
+        }
         text = text.substring(text.indexOf("N"));
         text = text.substring(text.lastIndexOf("Total") + 6);
         String ar[] = text.split("\\s");
@@ -443,14 +482,21 @@ public class Bill extends Application {
 
         textArea.setText(textArea.getText() + " ---------------------------The Products-----------------------\n"
                 + " -------------------------------------------------------------\n");
-        for (int i = 0; i < msg.length - 3; i += 4) {
+        if (!msg[0].equalsIgnoreCase("There no products to show.")) {
+            for (int i = 0; i < msg.length - 3; i += 4) {
 
-            textArea.setText(textArea.getText() + " Product Name: " + msg[i] + "\n Price: " + msg[i + 1] + "\n Quantity: " + msg[i + 2] + "\n Total: " + msg[i + 3] + "\n--------------------------------------------------------------\n");
+                textArea.setText(textArea.getText() + " Product Name: " + msg[i] + "\n Price: " + msg[i + 1] + "\n Quantity: " + msg[i + 2] + "\n Total: " + msg[i + 3] + "\n--------------------------------------------------------------\n");
+
+            }
+        } else {
+            textArea.setText(textArea.getText() + " There no products to show.");
+            textArea.setText(textArea.getText() + "\n--------------------------------------------------------------\n");
 
         }
+
         frame.setTitle("The Bill");
         frame.setVisible(true);
-        frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
     }
 
