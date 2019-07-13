@@ -1,10 +1,11 @@
 /*
- * Created By: Asrar
+ * Created By: Asrar Aljuhani
  * some of codes from https://github.com/buckyroberts 
  * 
  */
 package bill;
 
+import javafx.scene.text.Font;
 import com.itextpdf.text.BadElementException;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -34,7 +35,6 @@ import com.itextpdf.text.Element;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.Font;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Rectangle;
@@ -45,11 +45,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javax.swing.ImageIcon;
+import javafx.scene.text.FontWeight;
 import javax.swing.JFrame;
-import static javax.swing.JFrame.EXIT_ON_CLOSE;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 
 /**
  *
@@ -61,7 +62,7 @@ public class Bill extends Application {
     TableView<Thing> table;
     String nameOfCompany;
     ArrayList<Thing> list = new ArrayList<>();
-    private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 36, Font.BOLD);
+    private static com.itextpdf.text.Font catFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.TIMES_ROMAN, 36, com.itextpdf.text.Font.BOLD);
 
     TextField nameInput, priceInput, quantityInput;
 
@@ -82,7 +83,7 @@ public class Bill extends Application {
         Image imageWindow;
         imageWindow = new Image(new FileInputStream("client-icon.png"));
         window.getIcons().add(imageWindow);
-
+        //creating the table for scene2 
         //Name column
         TableColumn<Thing, String> nameColumn = new TableColumn<>("Name");
         nameColumn.setMinWidth(200);
@@ -135,6 +136,26 @@ public class Bill extends Application {
         });
 
         //scene1
+        //client-icon
+        Image imageMain;
+        imageMain = new Image(new FileInputStream("client-icon (1).png"));
+        //Setting the image view 
+        ImageView viewimageMain = new ImageView(imageMain);
+        HBox hBox0 = new HBox();
+
+        hBox0.getChildren().add(viewimageMain);
+        hBox0.setAlignment(Pos.BASELINE_CENTER);
+
+        HBox hBox00 = new HBox();
+        Text Welcome = new Text(" Welcome to Bill app");
+
+        Welcome.setFont(Font.font("Verdana", FontWeight.BOLD, 25));
+        Welcome.setStyle("-rtfx-background-color: blue;");
+        Welcome.setFill(Color.BLUEVIOLET);
+        hBox00.getChildren().add(Welcome);
+        hBox00.setAlignment(Pos.CENTER);
+      
+
         Label CompanyName = new Label("Enter Company Name");
 
         TextField CompanyNameInput = new TextField();
@@ -168,7 +189,7 @@ public class Bill extends Application {
         });
         vBox1.setAlignment(Pos.CENTER);
 
-        vBox1.getChildren().addAll(hBox1, close);
+        vBox1.getChildren().addAll(hBox0, hBox00, hBox1, close);
         Scene scene1 = new Scene(vBox1);
         Scene scene2 = new Scene(vBox2);
         Scene scene3 = new Scene(vBox3);
@@ -198,8 +219,12 @@ public class Bill extends Application {
         vBox2.getChildren().addAll(table, hBox2, v);
 
         //scene3
-        Label enterinfo = new Label("press on the button to create pdf file of your bill:)");
+       
+        Text enterinfo = new Text("Press on the button to create pdf file of your bill:)");
 
+        enterinfo.setFont(Font.font("Verdana", FontWeight.LIGHT, 18));
+        enterinfo.setFill(Color.RED);
+        
         HBox hBox3 = new HBox();
         hBox3.setPadding(new Insets(10, 10, 10, 10));
         hBox3.setSpacing(10);
@@ -319,7 +344,7 @@ public class Bill extends Application {
         ObservableList<Thing> productSelected, allProducts;
         allProducts = table.getItems();
         productSelected = table.getSelectionModel().getSelectedItems();
-        productSelected.forEach(allProducts::remove);//member refrence expression
+        productSelected.forEach((item) -> allProducts.remove(item));//lambda expression
     }
 
     //Get all of the products
